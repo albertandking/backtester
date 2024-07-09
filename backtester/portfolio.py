@@ -181,5 +181,4 @@ class NaivePortfolio(Portfolio):
         self.create_equity_curve_dataframe()
         self.plot_holdings()
         self.plot_performance()
-
         plt.show()

@@ -1,15 +1,13 @@
 import math
 
-import matplotlib.pyplot as plt
 import pandas as pd
-from matplotlib import style
 
 from backtester.event import SignalEvent, SignalType, EventType
 from backtester.strategy import Strategy
 
 
 class MovingAveragesLongStrategy(Strategy):
-    def __init__(self, data, portfolio, short_period, long_period, verbose=False, version=1):
+    def __init__(self, data, portfolio, short_period, long_period, verbose=False):
         self.data = data
         self.symbol_list = self.data.symbol_list
         self.portfolio = portfolio
@@ -17,7 +15,6 @@ class MovingAveragesLongStrategy(Strategy):
         self.long_period = long_period
         self.name = 'Moving Averages Long'
         self.verbose = verbose
-        self.version = version
 
         self.signals = self._setup_signals()
         self.strategy = self._setup_strategy()
@@ -27,7 +24,6 @@ class MovingAveragesLongStrategy(Strategy):
         signals = {}
         for symbol in self.symbol_list:
             signals[symbol] = pd.DataFrame(columns=['date', 'signal'])
-
         return signals
 
     def _setup_strategy(self):
@@ -100,35 +96,6 @@ class MovingAveragesLongStrategy(Strategy):
                         if self.verbose:
                             print("exit", date, price)
 
-    def plot(self):
-        style.use('ggplot')
-
-        for symbol in self.symbol_list:
-            self.strategy[symbol].set_index('date', inplace=True)
-            self.signals[symbol].set_index('date', inplace=True)
-            signals = self.signals[symbol]
-            strategy_fig, strategy_ax = plt.subplots()
-            temp_df = self.data.all_data[symbol].copy()
-            temp_df.columns = ['000001']
-
-            temp_df.plot(ax=strategy_ax, color='dodgerblue', linewidth=1.0)
-
-            short_index = signals[signals['signal'] < 0].index
-            long_index = signals[signals['signal'] > 0].index
-
-            strategy_ax.plot(self.strategy[symbol]['short'], label='Short EMA', color='grey')
-            strategy_ax.plot(self.strategy[symbol]['long'], label='Long EMA', color='k')
-            strategy_ax.plot(short_index, temp_df['000001'].loc[short_index], 'v', markersize=10, color='r',
-                             label='Exit')
-            strategy_ax.plot(long_index, temp_df['000001'].loc[long_index], '^', markersize=10, color='g', label='Long')
-
-            strategy_ax.set_title(self.name)
-            strategy_ax.set_xlabel('Time')
-            strategy_ax.set_ylabel('Value')
-            strategy_ax.legend()
-
-        plt.show()
-
 
 if __name__ == '__main__':
     from backtester.data import DataSource, DataLoader
@@ -139,12 +106,12 @@ if __name__ == '__main__':
     symbol_list = ["000001"]
     start_date = '20200101'  # 设置回测开始日期
     end_date = '20210201'  # 设置回测结束日期
-    data_loader = DataLoader(symbol_list, start_date, end_date, source=DataSource.AKSHARE)
-    my_data = data_loader.load_data_handler()
-    my_portfolio = NaivePortfolio(data=my_data, strategy_name='king', initial_capital=2000000)
-    my_strategy = MovingAveragesLongStrategy(data=my_data, portfolio=my_portfolio, short_period=2, long_period=5)
-    my_portfolio.strategy_name = my_strategy.name
+    data_loader = DataLoader(symbol_list=symbol_list, start_date=start_date, end_date=end_date,
+                             source=DataSource.AKSHARE)
+    my_portfolio = NaivePortfolio(data=data_loader(), strategy_name='king', initial_capital=2000000)
+    my_strategy = MovingAveragesLongStrategy(data=data_loader(), portfolio=my_portfolio, short_period=2, long_period=5,
+                                             verbose=True)
     my_broker = SimulateExecutionHandler()
 
-    result_df = backtest(my_data, my_portfolio, my_strategy, my_broker)
+    result_df = backtest(data=data_loader(), portfolio=my_portfolio, strategy=my_strategy, broker=my_broker)
     print(result_df)

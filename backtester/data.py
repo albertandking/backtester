@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from enum import Enum, auto
-from queue import Queue
 from typing import List, Dict
 
 import akshare as ak
@@ -108,8 +107,12 @@ class DataLoader:
         self.start_date = start_date
         self.end_date = end_date
         self.source = source
+        self.data_handler = self._load_data_handler()
 
-    def load_data_handler(self) -> DataHandler:
+    def __call__(self) -> DataHandler:
+        return self.data_handler
+
+    def _load_data_handler(self) -> DataHandler:
         if self.source == DataSource.AKSHARE:
             return AKShareDataHandler(self.symbol_list, self.start_date, self.end_date)
         elif self.source == DataSource.YFINANCE:

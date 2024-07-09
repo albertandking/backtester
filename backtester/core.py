@@ -1,14 +1,13 @@
 import queue
-from queue import Queue
 
 import pandas as pd
 
 from backtester.data import DataHandler
 from backtester.event import EventType
+from backtester.event_manager import EventManager
 from backtester.execution import ExecutionHandler
 from backtester.portfolio import Portfolio
 from backtester.strategy import Strategy
-from backtester.event_manager import EventManager
 
 
 def backtest(
@@ -43,5 +42,4 @@ def backtest(
     print(stats)
     temp_df = portfolio.create_equity_curve_dataframe()
 
-    # portfolio.plot_all()
     return temp_df

@@ -8,7 +8,8 @@ class Strategy(ABC):
     def calculate_signals(self, event):
         pass
 
-    def put_event(self, event):
+    @staticmethod
+    def put_event(event):
         EventManager().put(event)
 
     def plot(self):
