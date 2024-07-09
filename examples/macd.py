@@ -66,16 +66,16 @@ class MovingAveragesLongStrategy(Strategy):
         if event.type == EventType.MARKET:
             for symbol in self.symbol_list:
                 data = self.data.get_latest_data(symbol, num=-1)
-                df = pd.DataFrame(data, columns=['symbol', 'date', 'close'])
-                df = df.drop(['symbol'], axis=1)
-                df.set_index('date', inplace=True)
+                temp_df = pd.DataFrame(data, columns=['symbol', 'date', 'close'])
+                temp_df = temp_df.drop(labels=['symbol'], axis=1)
+                temp_df.set_index(keys='date', inplace=True)
                 if data is not None and len(data) >= self.long_period:
-                    price_short, price_long = self.calculate_long_short(df)
-                    date = df.index.values[-1]
-                    price = df['close'].iloc[-1]
+                    price_short, price_long = self.calculate_long_short(temp_df)
+                    date = temp_df.index.values[-1]
+                    price = temp_df['close'].iloc[-1]
                     self.signals[symbol] = pd.concat(
                         objs=[self.signals[symbol],
-                              pd.DataFrame.from_dict({'date': date, "short": price_short, "long": price_long},
+                              pd.DataFrame.from_dict(data={'date': date, "short": price_short, "long": price_long},
                                                      orient="index").T],
                         ignore_index=True)
                     if self.bought[symbol] is False and price_short > price_long:
@@ -109,18 +109,19 @@ class MovingAveragesLongStrategy(Strategy):
             self.signals[symbol].set_index('date', inplace=True)
             signals = self.signals[symbol]
             strategy_fig, strategy_ax = plt.subplots()
-            df = self.data.all_data[symbol].copy()
-            df.columns = ['000001']
+            temp_df = self.data.all_data[symbol].copy()
+            temp_df.columns = ['000001']
 
-            df.plot(ax=strategy_ax, color='dodgerblue', linewidth=1.0)
+            temp_df.plot(ax=strategy_ax, color='dodgerblue', linewidth=1.0)
 
             short_index = signals[signals['signal'] < 0].index
             long_index = signals[signals['signal'] > 0].index
 
             strategy_ax.plot(self.strategy[symbol]['short'], label='Short EMA', color='grey')
             strategy_ax.plot(self.strategy[symbol]['long'], label='Long EMA', color='k')
-            strategy_ax.plot(short_index, df['000001'].loc[short_index], 'v', markersize=10, color='r', label='Exit')
-            strategy_ax.plot(long_index, df['000001'].loc[long_index], '^', markersize=10, color='g', label='Long')
+            strategy_ax.plot(short_index, temp_df['000001'].loc[short_index], 'v', markersize=10, color='r',
+                             label='Exit')
+            strategy_ax.plot(long_index, temp_df['000001'].loc[long_index], '^', markersize=10, color='g', label='Long')
 
             strategy_ax.set_title(self.name)
             strategy_ax.set_xlabel('Time')
@@ -140,11 +141,12 @@ if __name__ == '__main__':
     my_events = queue.Queue()
     start_date = '20200101'  # 设置回测开始日期
     end_date = '20210201'  # 设置回测结束日期
-    my_data = HistoricDataHandler(events=my_events, symbol_list=['000001'], start_date=start_date, end_date=end_date)
+    my_data = HistoricDataHandler(events=my_events, symbol_list=['000001', '000002'], start_date=start_date, end_date=end_date)
     my_portfolio = NaivePortfolio(data=my_data, events=my_events, strategy_name='king', initial_capital=2000000)
     my_strategy = MovingAveragesLongStrategy(data=my_data, events=my_events, portfolio=my_portfolio, short_period=2,
                                              long_period=5)
     my_portfolio.strategy_name = my_strategy.name
     my_broker = SimulateExecutionHandler(my_events)
 
-    df = backtest(my_events, my_data, my_portfolio, my_strategy, my_broker)
+    result_df = backtest(my_events, my_data, my_portfolio, my_strategy, my_broker)
+    print(result_df)
