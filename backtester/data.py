@@ -7,10 +7,12 @@ import akshare as ak
 import pandas as pd
 
 from backtester.event import MarketEvent
+from backtester.event_manager import EventManager
 
 
 class DataSource(Enum):
     AKSHARE = auto()
+    YFINANCE = auto()
 
 
 class DataHandler(ABC):
@@ -28,9 +30,8 @@ class DataHandler(ABC):
         pass
 
 
-class HistoricDataHandler(DataHandler):
-    def __init__(self, events: Queue, symbol_list: List[str], start_date: str, end_date: str):
-        self.events = events
+class AKShareDataHandler(DataHandler):
+    def __init__(self, symbol_list: List[str], start_date: str, end_date: str):
         self.symbol_list = symbol_list
         self.start_date = start_date
         self.end_date = end_date
@@ -77,7 +78,8 @@ class HistoricDataHandler(DataHandler):
                 self._continue_backtest = False
                 # print(f"No more data for {symbol}. Stopping backtest.")  # 添加调试输出
 
-        self.events.put(MarketEvent())
+        # self.events.put(MarketEvent())
+        EventManager().put(MarketEvent())
         # print(f"Market event added. continue_backtest: {self.continue_backtest}")  # 添加调试输出
 
     @staticmethod
@@ -98,3 +100,20 @@ class HistoricDataHandler(DataHandler):
     @continue_backtest.setter
     def continue_backtest(self, value: bool):
         self._continue_backtest = value
+
+
+class DataLoader:
+    def __init__(self, symbol_list: List[str], start_date: str, end_date: str, source: DataSource):
+        self.symbol_list = symbol_list
+        self.start_date = start_date
+        self.end_date = end_date
+        self.source = source
+
+    def load_data_handler(self) -> DataHandler:
+        if self.source == DataSource.AKSHARE:
+            return AKShareDataHandler(self.symbol_list, self.start_date, self.end_date)
+        elif self.source == DataSource.YFINANCE:
+            # 实现YahooDataHandler
+            pass
+        else:
+            raise ValueError("Unsupported data source")

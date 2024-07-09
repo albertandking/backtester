@@ -66,7 +66,7 @@ class StopLossStrategy(Strategy):
 
 if __name__ == '__main__':
     import queue
-    from backtester.data import HistoricDataHandler
+    from backtester.data import AKShareDataHandler
     from backtester.portfolio import NaivePortfolio
     from backtester.execution import SimulateExecutionHandler
     from backtester.core import backtest
@@ -74,7 +74,7 @@ if __name__ == '__main__':
     my_events = queue.Queue()
     start_date = '20200101'  # 设置回测开始日期
     end_date = '20210201'  # 设置回测结束日期
-    my_data = HistoricDataHandler(events=my_events, symbol_list=['000001'], start_date=start_date, end_date=end_date)
+    my_data = AKShareDataHandler(events=my_events, symbol_list=['000001'], start_date=start_date, end_date=end_date)
     my_portfolio = NaivePortfolio(data=my_data, events=my_events, strategy_name='king', initial_capital=2000000)
     my_strategy = StopLossStrategy(data=my_data, events=my_events, portfolio=my_portfolio, stop_loss_percentage=0.95)
     my_portfolio.strategy_name = my_strategy.name

@@ -8,10 +8,10 @@ from backtester.event import EventType
 from backtester.execution import ExecutionHandler
 from backtester.portfolio import Portfolio
 from backtester.strategy import Strategy
+from backtester.event_manager import EventManager
 
 
 def backtest(
-    events: Queue,
     data: DataHandler,
     portfolio: Portfolio,
     strategy: Strategy,
@@ -24,7 +24,7 @@ def backtest(
 
         while True:
             try:
-                event = events.get(block=False)
+                event = EventManager().get(block=False)
             except queue.Empty:
                 break
 

@@ -9,10 +9,9 @@ from backtester.strategy import Strategy
 
 
 class MovingAveragesLongStrategy(Strategy):
-    def __init__(self, data, events, portfolio, short_period, long_period, verbose=False, version=1):
+    def __init__(self, data, portfolio, short_period, long_period, verbose=False, version=1):
         self.data = data
         self.symbol_list = self.data.symbol_list
-        self.events = events
         self.portfolio = portfolio
         self.short_period = short_period
         self.long_period = long_period
@@ -81,7 +80,7 @@ class MovingAveragesLongStrategy(Strategy):
                     if self.bought[symbol] is False and price_short > price_long:
                         quantity = math.floor(self.portfolio.current_holdings['cash'] / price)
                         signal = SignalEvent(symbol, date, SignalType.LONG, quantity)
-                        self.events.put(signal)
+                        self.put_event(signal)
                         self.bought[symbol] = True
                         self.signals[symbol] = pd.concat(
                             objs=[self.signals[symbol],
@@ -92,7 +91,7 @@ class MovingAveragesLongStrategy(Strategy):
                     elif self.bought[symbol] is True and price_short < price_long:
                         quantity = self.portfolio.current_positions[symbol]
                         signal = SignalEvent(symbol, date, SignalType.EXIT, quantity)
-                        self.events.put(signal)
+                        self.put_event(signal)
                         self.bought[symbol] = False
                         self.signals[symbol] = pd.concat(
                             objs=[self.signals[symbol],
@@ -132,21 +131,20 @@ class MovingAveragesLongStrategy(Strategy):
 
 
 if __name__ == '__main__':
-    import queue
-    from backtester.data import HistoricDataHandler
+    from backtester.data import DataSource, DataLoader
     from backtester.portfolio import NaivePortfolio
     from backtester.execution import SimulateExecutionHandler
     from backtester.core import backtest
 
-    my_events = queue.Queue()
+    symbol_list = ["000001"]
     start_date = '20200101'  # 设置回测开始日期
     end_date = '20210201'  # 设置回测结束日期
-    my_data = HistoricDataHandler(events=my_events, symbol_list=['000001', '000002'], start_date=start_date, end_date=end_date)
-    my_portfolio = NaivePortfolio(data=my_data, events=my_events, strategy_name='king', initial_capital=2000000)
-    my_strategy = MovingAveragesLongStrategy(data=my_data, events=my_events, portfolio=my_portfolio, short_period=2,
-                                             long_period=5)
+    data_loader = DataLoader(symbol_list, start_date, end_date, source=DataSource.AKSHARE)
+    my_data = data_loader.load_data_handler()
+    my_portfolio = NaivePortfolio(data=my_data, strategy_name='king', initial_capital=2000000)
+    my_strategy = MovingAveragesLongStrategy(data=my_data, portfolio=my_portfolio, short_period=2, long_period=5)
     my_portfolio.strategy_name = my_strategy.name
-    my_broker = SimulateExecutionHandler(my_events)
+    my_broker = SimulateExecutionHandler()
 
-    result_df = backtest(my_events, my_data, my_portfolio, my_strategy, my_broker)
+    result_df = backtest(my_data, my_portfolio, my_strategy, my_broker)
     print(result_df)

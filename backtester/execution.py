@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 
 from backtester.event import FillEvent, EventType
+from backtester.event_manager import EventManager
 
 
 class ExecutionHandler(ABC):
@@ -11,8 +12,7 @@ class ExecutionHandler(ABC):
 
 
 class SimulateExecutionHandler(ExecutionHandler):
-    def __init__(self, events, verbose=False):
-        self.events = events
+    def __init__(self, verbose=False):
         self.verbose = verbose
 
     def execute_order(self, event):
@@ -20,4 +20,4 @@ class SimulateExecutionHandler(ExecutionHandler):
             if self.verbose:
                 print("Order Executed:", event.symbol, event.quantity, event.direction)
             fill_event = FillEvent(datetime.utcnow(), event.symbol, 'ARCA', event.quantity, event.direction, 0)
-            self.events.put(fill_event)
+            EventManager().put(fill_event)

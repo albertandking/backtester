@@ -6,6 +6,7 @@ from matplotlib import style
 
 from backtester.event import EventType, SignalType, OrderType, OrderDirection, OrderEvent
 from backtester.performance import calculate_sharpe_ratio, calculate_drawdowns
+from backtester.event_manager import EventManager
 
 
 class Portfolio(ABC):
@@ -35,9 +36,8 @@ class Portfolio(ABC):
 
 
 class NaivePortfolio(Portfolio):
-    def __init__(self, data, events, strategy_name, initial_capital=1.0):
+    def __init__(self, data, strategy_name, initial_capital=1.0):
         self.data = data
-        self.events = events
         self.symbol_list = self.data.symbol_list
         self.initial_capital = initial_capital
         self.strategy_name = strategy_name
@@ -128,7 +128,7 @@ class NaivePortfolio(Portfolio):
     def update_signal(self, event):
         if event.type == EventType.SIGNAL:
             order_event = self.generate_naive_order(event)
-            self.events.put(order_event)
+            EventManager().put(order_event)
 
     def create_equity_curve_dataframe(self):
         curve = pd.DataFrame(self.all_holdings)
