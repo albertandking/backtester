@@ -6,7 +6,7 @@ from backtester.event import SignalEvent, SignalType, EventType
 from backtester.strategy import Strategy
 
 
-class MovingAveragesLongStrategy(Strategy):
+class MAStrategy(Strategy):
     def __init__(self, data, portfolio, short_period, long_period, verbose=False):
         self.data = data
         self.symbol_list = self.data.symbol_list
@@ -109,8 +109,8 @@ if __name__ == '__main__':
     data_loader = DataLoader(symbol_list=symbol_list, start_date=start_date, end_date=end_date,
                              source=DataSource.AKSHARE)
     my_portfolio = NaivePortfolio(data=data_loader(), strategy_name='king', initial_capital=2000000)
-    my_strategy = MovingAveragesLongStrategy(data=data_loader(), portfolio=my_portfolio, short_period=2, long_period=5,
-                                             verbose=True)
+    my_strategy = MAStrategy(data=data_loader(), portfolio=my_portfolio, short_period=2, long_period=5,
+                             verbose=True)
     my_broker = SimulateExecutionHandler()
 
     result_df = backtest(data=data_loader(), portfolio=my_portfolio, strategy=my_strategy, broker=my_broker)
